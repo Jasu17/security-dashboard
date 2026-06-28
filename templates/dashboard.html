@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h4 class="mb-4">Resultados: {{ filename }}</h4>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card text-center shadow-sm">
+            <div class="card-body">
+                <h6 class="card-subtitule text-muted mb-1">Lineas procesadas</h6>
+                <h3>{{ results.total_lines }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center shadow-sm">
+            <div class="card-body">
+                <h6 class="card-subtitule text-muted mb-1">Eventos detectados</h6>
+                <h3>{{ results.total_events }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center shadow-sm">
+            <div class="card-body">
+                <h6 class="card-subtitle text-muted mb-1">IPs identificadas</h6>
+                <h3>{{ results.ips | length }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center shadow-sm">
+            <div class="card-body">
+                <h6 class="card-subtitle text-muted mb-1">Usuarios identificados</h6>
+                <h3>{{ results.users | length }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<p class="text-muted">Deteccion de eventos y hallazgos disponibles en la siguiente fase.</p>
+{% endblock %}
