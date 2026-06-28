@@ -1,13 +1,17 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h4 class="mb-4">Resultados: {{ filename }}</h4>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0">Resultados: <span class="text-muted fw-normal">{{ filename }}</span></h4>
+    <a href="/" class="btn btn-outline-secondary btn-sm">← Subir otro archivo</a>
+</div>
 
+<!-- Métricas -->
 <div class="row g-3 mb-4">
     <div class="col-md-3">
         <div class="card text-center shadow-sm">
             <div class="card-body">
-                <h6 class="card-subtitule text-muted mb-1">Lineas procesadas</h6>
+                <h6 class="card-subtitle text-muted mb-1">Líneas procesadas</h6>
                 <h3>{{ results.total_lines }}</h3>
             </div>
         </div>
@@ -15,7 +19,7 @@
     <div class="col-md-3">
         <div class="card text-center shadow-sm">
             <div class="card-body">
-                <h6 class="card-subtitule text-muted mb-1">Eventos detectados</h6>
+                <h6 class="card-subtitle text-muted mb-1">Eventos detectados</h6>
                 <h3>{{ results.total_events }}</h3>
             </div>
         </div>
@@ -38,5 +42,110 @@
     </div>
 </div>
 
-<p class="text-muted">Deteccion de eventos y hallazgos disponibles en la siguiente fase.</p>
+<!-- Hallazgos -->
+{% if results.findings %}
+<div class="mb-4">
+    <h5> Hallazgos de seguridad</h5>
+    {% for finding in results.findings %}
+        {% if finding.severity == "high" %}
+            <div class="alert alert-danger">{{ finding.message }}</div>
+        {% elif finding.severity == "medium" %}
+            <div class="alert alert-warning">{{ finding.message }}</div>
+        {% else %}
+            <div class="alert alert-info">{{ finding.message }}</div>
+        {% endif %}
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Gráfica de tipos de evento -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h6 class="card-title">Distribución de eventos</h6>
+                <canvas id="eventsChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- IPs identificadas -->
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h6 class="card-title">IPs identificadas</h6>
+                <ul class="list-group list-group-flush">
+                    {% for ip in results.ips %}
+                        <li class="list-group-item">{{ ip }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabla de eventos -->
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <h6 class="card-title">Tabla de eventos detectados</h6>
+        <div class="table-responsive">
+            <table class="table table-striped table-sm">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Tipo</th>
+                        <th>Usuario</th>
+                        <th>IP</th>
+                        <th>Línea original</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for event in results.events %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>
+                            {% if event.type == "Failed SSH Login" %}
+                                <span class="badge bg-danger">{{ event.type }}</span>
+                            {% elif event.type == "Successful SSH Login" %}
+                                <span class="badge bg-success">{{ event.type }}</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark">{{ event.type }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ event.user }}</td>
+                        <td>{{ event.ip }}</td>
+                        <td><code class="small">{{ event.line }}</code></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const events = {{ results.events | tojson }};
+
+    const counts = {};
+    events.forEach(e => {
+        counts[e.type] = (counts[e.type] || 0) + 1;
+    });
+
+    new Chart(document.getElementById("eventsChart"), {
+        type: "doughnut",
+        data: {
+            labels: Object.keys(counts),
+            datasets: [{
+                data: Object.values(counts),
+                backgroundColor: ["#dc3545", "#198754", "#ffc107"],
+            }]
+        },
+        options: {
+            plugins: {
+                legend: { position: "bottom" }
+            }
+        }
+    });
+</script>
 {% endblock %}
