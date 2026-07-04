@@ -1,7 +1,45 @@
 body{
-    background-color: #f8f9fa;
+    background-color: #f0f2f5;
+    font-family: 'Segoe UI', sans-serif;
 }
 
 .navbar{
-    margin-bottom: 1rem;
+    margin-bottom: 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.card {
+    border: none;
+    border-radius: 10px;
+}
+
+.card h3{
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1a1a2e;
+}
+
+.card h6 {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.table code {
+    font-size: 0.75rem;
+    color: #555;
+    word-break: break-all;
+}
+
+.badge {
+    font-size: 0.75rem;
+    padding: 4px 8px;
+}
+
+footer.site-footer {
+    text-align: center;
+    padding: 20px;
+    margin-top: 40px;
+    font-size: 0.8rem;
+    color: #aaa;
 }

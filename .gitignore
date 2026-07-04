@@ -6,3 +6,4 @@ uploads/*
 reports/*
 !reports/.gitkeep
 .env
+Logs_test/

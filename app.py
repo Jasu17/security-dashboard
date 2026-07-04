@@ -71,6 +71,9 @@ def report(filename):
 
     return send_file(report_path, as_attachment=True, download_name=f"report_{filename}.html")
 
-
+@app.errorhandler(413)
+def file_too_large(e):
+    flash("El archivo supera el tamaño maximo permitido (10 MB).", "danger")
+    return redirect(url_for("index"))
 if __name__ == "__main__":
     app.run(debug=True)
