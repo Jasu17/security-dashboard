@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, send_file
 from analyzer import analyze
 
 load_dotenv()
@@ -52,6 +52,24 @@ def upload():
     results = analyze(filepath)
 
     return render_template("dashboard.html", filename=file.filename, results=results)
+
+
+@app.route("/report/<filename>")
+def report(filename):
+    filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+
+    if not os.path.exists(filepath):
+        flash("Archivo no encontrado.", "danger")
+        return redirect(url_for("index"))
+
+    results = analyze(filepath)
+    html = render_template("report.html", filename=filename, results=results)
+
+    report_path = os.path.join("reports", f"report_{filename}.html")
+    with open(report_path, "w") as f:
+        f.write(html)
+
+    return send_file(report_path, as_attachment=True, download_name=f"report_{filename}.html")
 
 
 if __name__ == "__main__":
