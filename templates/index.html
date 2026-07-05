@@ -9,23 +9,30 @@
                 <p class="text-muted small mb-3">Analiza eventos de seguridad en logs de Linux.</p>
                 <form action="/upload" method="POST" enctype="multipart/form-data">
                     <div class="mb-3">
+                        <label for="log_type" class="form-label fw-semibold">Tipo de log</label>
+                        <select class="form-select" id="log_type" name="log_type">
+                            <option value="openssh">OpenSSH</option>
+                            <option value="apache_access">Apache Access Log</option>
+                            <option value="apache_error">Apache Error Log</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
                         <label for="logfile" class="form-label fw-semibold">Selecciona un archivo</label>
                         <input class="form-control" type="file" id="logfile" name="logfile" accept=".log,.txt">
                         <div class="form-text">Formatos soportados: <code>.log</code>, <code>.txt</code>, <code>auth.log</code>, <code>syslog</code> — máx. 10 MB</div>
                     </div>
-                    <button type="submit" class="btn btn-primary w-100">🔍 Analizar log</button>
+                    <button type="submit" class="btn btn-primary w-100">Analizar log</button>
                 </form>
             </div>
         </div>
 
         <div class="card shadow-sm mt-3 p-2">
             <div class="card-body">
-                <h6 class="card-title">Eventos detectados</h6>
+                <h6 class="card-title">Eventos detectados por tipo</h6>
                 <ul class="list-unstyled small text-muted mb-0">
-                    <li>Failed SSH Login</li>
-                    <li>Successful SSH Login</li>
-                    <li>Invalid User</li>
-                    <li>Posibles ataques de fuerza bruta</li>
+                    <li class="mb-1"><strong>OpenSSH</strong> — Failed/Successful login, Invalid user, Brute force</li>
+                    <li class="mb-1"><strong>Apache Access</strong> — 4xx/5xx errors, Path traversal, SQLi, Scanner</li>
+                    <li><strong>Apache Error</strong> — Error levels, Module errors, Client errors</li>
                 </ul>
             </div>
         </div>

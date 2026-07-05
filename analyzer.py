@@ -10,7 +10,16 @@ IP_PATTERN = re.compile(r"\b(\d{1,3}(?:\.\d{1,3}){3})\b")
 BRUTE_FORCE_THRESHOLD = 5
 
 
-def analyze(filepath):
+def analyze(filepath, log_type):
+    if log_type == "openssh":
+        return _analyze_openssh(filepath)
+    elif log_type == "apache_access":
+        return _analyze_apache_access(filepath)
+    elif log_type == "apache_error":
+        return _analyze_apache_error(filepath)
+
+
+def _analyze_openssh(filepath):
     with open(filepath, "r", errors="ignore") as f:
         lines = f.readlines()
 
@@ -64,9 +73,10 @@ def analyze(filepath):
                 "line": line.strip(),
             })
 
-    findings = _generate_findings(failed_attempts, invalid_users)
+    findings = _generate_openssh_findings(failed_attempts, invalid_users)
 
     return {
+        "log_type": "openssh",
         "total_lines": total_lines,
         "total_events": len(events),
         "ips": sorted(ips),
@@ -76,7 +86,7 @@ def analyze(filepath):
     }
 
 
-def _generate_findings(failed_attempts, invalid_users):
+def _generate_openssh_findings(failed_attempts, invalid_users):
     findings = []
 
     for ip, count in failed_attempts.items():
@@ -94,3 +104,27 @@ def _generate_findings(failed_attempts, invalid_users):
             })
 
     return findings
+
+
+def _analyze_apache_access(filepath):
+    return {
+        "log_type": "apache_access",
+        "total_lines": 0,
+        "total_events": 0,
+        "ips": [],
+        "users": [],
+        "events": [],
+        "findings": [],
+    }
+
+
+def _analyze_apache_error(filepath):
+    return {
+        "log_type": "apache_error",
+        "total_lines": 0,
+        "total_events": 0,
+        "ips": [],
+        "users": [],
+        "events": [],
+        "findings": [],
+    }

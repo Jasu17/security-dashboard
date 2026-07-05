@@ -10,6 +10,7 @@ app.secret_key = os.getenv("SECRET_KEY")
 
 UPLOAD_FOLDER = "uploads"
 ALLOWED_EXTENSIONS = {"log", "txt"}
+ALLOWED_LOG_TYPES = {"openssh", "apache_access", "apache_error"}
 MAX_FILE_SIZE = 10 * 1024 * 1024
 
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
@@ -30,6 +31,7 @@ def index():
 @app.route("/upload", methods=["POST"])
 def upload():
     file = request.files.get("logfile")
+    log_type = request.form.get("log_type")
 
     if not file or file.filename == "":
         flash("No se seleccionó ningún archivo.", "danger")
@@ -37,6 +39,10 @@ def upload():
 
     if not allowed_file(file.filename):
         flash("Extensión no permitida. Usa .log, .txt, auth.log o syslog.", "danger")
+        return redirect(url_for("index"))
+
+    if log_type not in ALLOWED_LOG_TYPES:
+        flash("Tipo de log no válido.", "danger")
         return redirect(url_for("index"))
 
     content = file.read()
@@ -49,21 +55,25 @@ def upload():
     with open(filepath, "wb") as f:
         f.write(content)
 
-    results = analyze(filepath)
+    results = analyze(filepath, log_type)
 
-    return render_template("dashboard.html", filename=file.filename, results=results)
+    return render_template("dashboard.html", filename=file.filename, results=results, log_type=log_type)
 
 
-@app.route("/report/<filename>")
-def report(filename):
+@app.route("/report/<log_type>/<filename>")
+def report(log_type, filename):
     filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
 
     if not os.path.exists(filepath):
         flash("Archivo no encontrado.", "danger")
         return redirect(url_for("index"))
 
-    results = analyze(filepath)
-    html = render_template("report.html", filename=filename, results=results)
+    if log_type not in ALLOWED_LOG_TYPES:
+        flash("Tipo de log no válido.", "danger")
+        return redirect(url_for("index"))
+
+    results = analyze(filepath, log_type)
+    html = render_template("report.html", filename=filename, results=results, log_type=log_type)
 
     report_path = os.path.join("reports", f"report_{filename}.html")
     with open(report_path, "w") as f:
@@ -71,9 +81,12 @@ def report(filename):
 
     return send_file(report_path, as_attachment=True, download_name=f"report_{filename}.html")
 
+
 @app.errorhandler(413)
 def file_too_large(e):
-    flash("El archivo supera el tamaño maximo permitido (10 MB).", "danger")
+    flash("El archivo supera el tamaño máximo permitido (10 MB).", "danger")
     return redirect(url_for("index"))
+
+
 if __name__ == "__main__":
     app.run(debug=True)
