@@ -11,38 +11,16 @@
 
 <!-- Métricas -->
 <div class="row g-3 mb-4">
+    {% for metric in results.metrics %}
     <div class="col-md-3">
         <div class="card text-center shadow-sm">
             <div class="card-body">
-                <h6 class="card-subtitle text-muted mb-1">Líneas procesadas</h6>
-                <h3>{{ results.total_lines }}</h3>
+                <h6 class="card-subtitle text-muted mb-1">{{ metric.label }}</h6>
+                <h3>{{ metric.value }}</h3>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card text-center shadow-sm">
-            <div class="card-body">
-                <h6 class="card-subtitle text-muted mb-1">Eventos detectados</h6>
-                <h3>{{ results.total_events }}</h3>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card text-center shadow-sm">
-            <div class="card-body">
-                <h6 class="card-subtitle text-muted mb-1">IPs identificadas</h6>
-                <h3>{{ results.ips | length }}</h3>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card text-center shadow-sm">
-            <div class="card-body">
-                <h6 class="card-subtitle text-muted mb-1">Usuarios identificados</h6>
-                <h3>{{ results.users | length }}</h3>
-            </div>
-        </div>
-    </div>
+    {% endfor %}
 </div>
 
 <!-- Hallazgos -->

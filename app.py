@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 from flask import Flask, render_template, request, redirect, url_for, flash, send_file
-from analyzer import analyze
+from analyzer import analyze, LOG_TYPES
 
 load_dotenv()
 
@@ -10,7 +10,6 @@ app.secret_key = os.getenv("SECRET_KEY")
 
 UPLOAD_FOLDER = "uploads"
 ALLOWED_EXTENSIONS = {"log", "txt"}
-ALLOWED_LOG_TYPES = {"openssh", "apache_access", "apache_error"}
 MAX_FILE_SIZE = 10 * 1024 * 1024
 
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
@@ -25,7 +24,7 @@ def allowed_file(filename):
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return render_template("index.html", log_types=LOG_TYPES)
 
 
 @app.route("/upload", methods=["POST"])
@@ -41,7 +40,7 @@ def upload():
         flash("Extensión no permitida. Usa .log, .txt, auth.log o syslog.", "danger")
         return redirect(url_for("index"))
 
-    if log_type not in ALLOWED_LOG_TYPES:
+    if log_type not in LOG_TYPES:
         flash("Tipo de log no válido.", "danger")
         return redirect(url_for("index"))
 
@@ -68,7 +67,7 @@ def report(log_type, filename):
         flash("Archivo no encontrado.", "danger")
         return redirect(url_for("index"))
 
-    if log_type not in ALLOWED_LOG_TYPES:
+    if log_type not in LOG_TYPES:
         flash("Tipo de log no válido.", "danger")
         return redirect(url_for("index"))
 

@@ -11,9 +11,9 @@
                     <div class="mb-3">
                         <label for="log_type" class="form-label fw-semibold">Tipo de log</label>
                         <select class="form-select" id="log_type" name="log_type">
-                            <option value="openssh">OpenSSH</option>
-                            <option value="apache_access">Apache Access Log</option>
-                            <option value="apache_error">Apache Error Log</option>
+                            {% for key, label in log_types.items() %}
+                                <option value="{{ key }}">{{ label }}</option>
+                            {% endfor %}
                         </select>
                     </div>
                     <div class="mb-3">
@@ -21,7 +21,7 @@
                         <input class="form-control" type="file" id="logfile" name="logfile" accept=".log,.txt">
                         <div class="form-text">Formatos soportados: <code>.log</code>, <code>.txt</code>, <code>auth.log</code>, <code>syslog</code> — máx. 10 MB</div>
                     </div>
-                    <button type="submit" class="btn btn-primary w-100">Analizar log</button>
+                    <button type="submit" class="btn btn-primary w-100">🔍 Analizar log</button>
                 </form>
             </div>
         </div>

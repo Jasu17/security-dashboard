@@ -2,6 +2,8 @@ import re
 from collections import defaultdict
 
 
+# --- Patterns ---
+
 FAILED_SSH = re.compile(r"Failed password for (?:invalid user )?(\w+) from (\S+)")
 SUCCESSFUL_SSH = re.compile(r"Accepted (?:password|publickey) for (\w+) from (\S+)")
 INVALID_USER = re.compile(r"Invalid user (\w+) from (\S+)")
@@ -10,14 +12,25 @@ IP_PATTERN = re.compile(r"\b(\d{1,3}(?:\.\d{1,3}){3})\b")
 BRUTE_FORCE_THRESHOLD = 5
 
 
-def analyze(filepath, log_type):
-    if log_type == "openssh":
-        return _analyze_openssh(filepath)
-    elif log_type == "apache_access":
-        return _analyze_apache_access(filepath)
-    elif log_type == "apache_error":
-        return _analyze_apache_error(filepath)
+# --- Source of truth ---
 
+LOG_TYPES = {
+    "openssh": "OpenSSH",
+    "apache_access": "Apache Access Log",
+    "apache_error": "Apache Error Log",
+}
+
+
+# --- Dispatcher ---
+
+def analyze(filepath, log_type):
+    parser = PARSERS.get(log_type)
+    if not parser:
+        raise ValueError(f"Unsupported log type: {log_type}")
+    return parser(filepath)
+
+
+# --- OpenSSH ---
 
 def _analyze_openssh(filepath):
     with open(filepath, "r", errors="ignore") as f:
@@ -77,15 +90,23 @@ def _analyze_openssh(filepath):
             })
 
     findings = _generate_openssh_findings(failed_attempts, invalid_users)
+    sorted_ips = sorted(ips)
 
     return {
         "log_type": "openssh",
         "total_lines": total_lines,
         "total_events": len(events),
-        "ips": sorted(ips),
+        "ips": sorted_ips,
         "users": sorted(users),
         "events": events,
         "findings": findings,
+        "extras": {},
+        "metrics": [
+            {"label": "Líneas procesadas", "value": total_lines},
+            {"label": "Eventos detectados", "value": len(events)},
+            {"label": "IPs identificadas", "value": len(sorted_ips)},
+            {"label": "Usuarios identificados", "value": len(users)},
+        ],
     }
 
 
@@ -109,6 +130,8 @@ def _generate_openssh_findings(failed_attempts, invalid_users):
     return findings
 
 
+# --- Apache Access (stub) ---
+
 def _analyze_apache_access(filepath):
     return {
         "log_type": "apache_access",
@@ -118,8 +141,12 @@ def _analyze_apache_access(filepath):
         "users": [],
         "events": [],
         "findings": [],
+        "extras": {},
+        "metrics": [],
     }
 
+
+# --- Apache Error (stub) ---
 
 def _analyze_apache_error(filepath):
     return {
@@ -130,4 +157,15 @@ def _analyze_apache_error(filepath):
         "users": [],
         "events": [],
         "findings": [],
+        "extras": {},
+        "metrics": [],
     }
+
+
+# --- Parser registry ---
+
+PARSERS = {
+    "openssh": _analyze_openssh,
+    "apache_access": _analyze_apache_access,
+    "apache_error": _analyze_apache_error,
+}
