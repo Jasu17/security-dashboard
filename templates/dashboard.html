@@ -107,13 +107,7 @@
                     <tr>
                         <td>{{ loop.index }}</td>
                         <td>
-                            {% if event.type == "Failed SSH Login" %}
-                                <span class="badge bg-danger">{{ event.type }}</span>
-                            {% elif event.type == "Successful SSH Login" %}
-                                <span class="badge bg-success">{{ event.type }}</span>
-                            {% else %}
-                                <span class="badge bg-warning text-dark">{{ event.type }}</span>
-                            {% endif %}
+                            <span class="badge bg-{{ event.severity }}{% if event.severity == 'warning' %} text-dark{% endif %}">{{ event.type }}</span>
                         </td>
                         <td>{{ event.user }}</td>
                         <td>{{ event.ip }}</td>

@@ -43,6 +43,7 @@ def _analyze_openssh(filepath):
             failed_attempts[ip] += 1
             events.append({
                 "type": "Failed SSH Login",
+                "severity": "danger",
                 "user": user,
                 "ip": ip,
                 "line": line.strip(),
@@ -55,6 +56,7 @@ def _analyze_openssh(filepath):
             users.add(user)
             events.append({
                 "type": "Successful SSH Login",
+                "severity": "success",
                 "user": user,
                 "ip": ip,
                 "line": line.strip(),
@@ -68,6 +70,7 @@ def _analyze_openssh(filepath):
             invalid_users[user] += 1
             events.append({
                 "type": "Invalid User",
+                "severity": "warning",
                 "user": user,
                 "ip": ip,
                 "line": line.strip(),

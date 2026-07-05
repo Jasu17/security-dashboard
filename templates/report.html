@@ -12,9 +12,9 @@
         th { background-color: #f0f0f0; }
         tr:nth-child(even) { background-color: #f9f9f9; }
         .badge { padding: 3px 8px; border-radius: 4px; font-size: 12px; color: white; }
-        .failed { background-color: #dc3545; }
-        .success { background-color: #198754; }
-        .invalid { background-color: #ffc107; color: #333; }
+        .danger { background-color: #dc3545; color: white; }
+        .success { background-color: #198754; color: white; }
+        .warning { background-color: #ffc107; color: #333; }
         .finding { padding: 10px 14px; border-radius: 4px; margin-bottom: 8px; }
         .high { background-color: #f8d7da; border-left: 4px solid #dc3545; }
         .medium { background-color: #fff3cd; border-left: 4px solid #ffc107; }
@@ -74,13 +74,7 @@
                 <tr>
                     <td>{{ loop.index }}</td>
                     <td>
-                        {% if event.type == "Failed SSH login" %}
-                            <span class="badge failed">{{ event.type }}</span>
-                        {% elif event.type == "Successful SSH login" %}
-                            <span class="badge success">{{ event.type }}</span>
-                        {% else %}
-                            <span class="badge invalid">{{ event.type }}</span>
-                        {% endif %}
+                        <span class="badge {{ event.severity }}">{{ event.type }}</span>
                     </td>
                     <td>{{ event.user }}</td>
                     <td>{{ event.ip }}</td>
