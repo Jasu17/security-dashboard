@@ -234,17 +234,101 @@ def _generate_apache_access_findings(failed_attempts, status_codes):
 # --- Apache Error (stub) ---
 
 def _analyze_apache_error(filepath):
+    with open(filepath, "r", errors="ignore") as f:
+        lines = f.readlines()
+
+    total_lines = len(lines)
+    ips = set()
+    events = []
+    error_levels = defaultdict(int)
+    modules = defaultdict(int)
+
+    error_pattern = re.compile(
+        r'\[(?:.*?)\] \[(\w+):(\w+)\] \[pid \d+\].*?\[client (\S+):\d+\] (.+)'
+    )
+
+    error_pattern_simple = re.compile(
+        r'\[(?:.*?)\] \[(\w+)\] \[pid \d+\].*?\[client (\S+):\d+\] (.+)'
+    )
+
+    for line in lines:
+        match = error_pattern.search(line)
+        if match:
+            module = match.group(1)
+            level = match.group(2)
+            ip = match.group(3)
+            message = match.group(4)
+        else:
+            match = error_pattern_simple.search(line)
+            if not match:
+                continue
+            module = "core"
+            level = match.group(1)
+            ip = match.group(2)
+            message = match.group(3)
+        
+        ips.add(ip)
+        error_levels[level] += 1
+        modules[module] += 1
+
+        if level in ("emerg", "alert", "crit", "error"):
+            severity = "danger"
+        elif level == "warn":
+            severity = "warning"
+        else:
+            severity = "secondary"
+
+        events.append({
+            "type": f"Apache {level.upper()}",
+            "severity": severity,
+            "user": "-",
+            "ip": ip,
+            "line": line.strip(),
+        })
+    
+    findings = _generate_apache_error_findings(error_levels, modules)
+    sorted_ips = sorted(ips)
+
     return {
         "log_type": "apache_error",
-        "total_lines": 0,
-        "total_events": 0,
-        "ips": [],
+        "total_lines": total_lines,
+        "total_events": len(events),
+        "ips": sorted_ips,
         "users": [],
-        "events": [],
-        "findings": [],
-        "extras": {},
-        "metrics": [],
+        "events": events,
+        "findings": findings,
+        "extras": {
+            "error_levels": dict(error_levels),
+            "modules": dict(modules),
+        },
+        "metrics": [
+            {"label": "Líneas procesadas", "value": total_lines},
+            {"label": "Eventos detectados", "value": len(events)},
+            {"label": "IPs identificadas", "value": len(sorted_ips)},
+            {"label": "Errores criticos", "value":sum(
+                v for k, v in error_levels.items() if k in ("emerg", "alert", "crit", "error")
+            )},
+        ],
     }
+
+def _generate_apache_error_findings(error_levels, modules):
+    findings = []
+
+    critical = sum(v for k, v in error_levels.items() if k in ("emerg", "alert", "crit", "error"))
+    if critical >=5:
+        findings.append({
+            "severity": "high",
+            "message": f"Alto número de errores críticos detectados -> {critical} ocurrencias.",
+        })
+
+    for module, count in modules.items():
+        if count >=20:
+            findings.append({
+                "severity": "medium",
+                "message": f"Modulo '{module}' con alto número de errores -> {count} ocurrencias.",
+            })
+
+    return findings
 
 
 # --- Parser registry ---
