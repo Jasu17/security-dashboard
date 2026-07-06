@@ -39,6 +39,30 @@
 </div>
 {% endif %}
 
+{% if results.extras.top_urls %}
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <h6 class="card-title">Top URLs solicitadas</h6>
+        <table class="table table-sm table-striped mb-0">
+            <thead>
+                <tr>
+                    <th>URL</th>
+                    <th>Requests</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for url, count in results.extras.top_urls %}
+                <tr>
+                    <td><code>{{ url }}</code></td>
+                    <td>{{ count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
 <!-- Gráfica de tipos de evento -->
 <div class="row mb-4">
     <div class="col-md-6">

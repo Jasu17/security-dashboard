@@ -133,18 +133,103 @@ def _generate_openssh_findings(failed_attempts, invalid_users):
 # --- Apache Access (stub) ---
 
 def _analyze_apache_access(filepath):
+    with open(filepath, "r", errors="ignore") as f:
+        lines = f.readlines()
+
+    total_lines = len(lines)
+    ips = set()
+    events = []
+    failed_attempts = defaultdict(int)
+    status_codes = defaultdict(int)
+    top_urls = defaultdict(int)
+    methods = defaultdict(int)
+
+    access_pattern = re.compile(
+        r'(\S+) \S+ \S+ \[.*?\] "(\w+) (\S+) \S+" (\d{3}) \S+'
+    )
+
+    for line in lines:
+        match = access_pattern.search(line)
+        if not match:
+            continue
+
+        ip = match.group(1)
+        method = match.group(2)
+        url = match.group(3)
+        status = match.group(4)
+
+        ips.add(ip)
+        failed_attempts[ip] += 1
+        status_codes[status] += 1
+        top_urls[url] += 1
+        methods[method] += 1
+
+        if status.startswith("5"):
+            event_type = "5xx Error"
+            severity = "danger"
+        elif status.startswith("4"):
+            event_type = "4xx Error"
+            severity = "warning"
+        else:
+            event_type = "OK"
+            severity = "success"
+
+        events.append({
+            "type": event_type,
+            "severity": severity,
+            "user": "-",
+            "ip": ip,
+            "line": line.strip(),
+        })
+
+    findings = _generate_apache_access_findings(failed_attempts, status_codes)
+    sorted_ips = sorted(ips)
+    top_urls_sorted = sorted(top_urls.items(), key=lambda x: x[1], reverse=True)[:10]
+
     return {
         "log_type": "apache_access",
-        "total_lines": 0,
-        "total_events": 0,
-        "ips": [],
+        "total_lines": total_lines,
+        "total_events": len(events),
+        "ips": sorted_ips,
         "users": [],
-        "events": [],
-        "findings": [],
-        "extras": {},
-        "metrics": [],
+        "events": events,
+        "findings": findings,
+        "extras": {
+            "status_codes": dict(status_codes),
+            "top_urls": top_urls_sorted,
+            "methods": dict(methods),
+        },
+        "metrics": [
+            {"label": "Líneas procesadas", "value": total_lines},
+            {"label": "IPs identificadas", "value": len(sorted_ips)},
+            {"label": "Requests totales", "value": sum(status_codes.values())},
+            {"label": "Errores detectados", "value": sum(
+                v for k, v in status_codes.items() if k.startswith("4") or k.startswith("5")
+            )},
+        ],
     }
 
+
+def _generate_apache_access_findings(failed_attempts, status_codes):
+    findings = []
+
+    SCANNER_THRESHOLD = 100
+
+    for ip, count in failed_attempts.items():
+        if count >= SCANNER_THRESHOLD:
+            findings.append({
+                "severity": "high",
+                "message": f"Posible scanner o bot detectado desde {ip} — {count} requests.",
+            })
+
+    total_5xx = sum(v for k, v in status_codes.items() if k.startswith("5"))
+    if total_5xx >= 10:
+        findings.append({
+            "severity": "medium",
+            "message": f"Alto número de errores 5xx detectados — {total_5xx} ocurrencias.",
+        })
+
+    return findings
 
 # --- Apache Error (stub) ---
 
