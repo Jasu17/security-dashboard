@@ -4,7 +4,7 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4 class="mb-0">Resultados: <span class="text-muted fw-normal">{{ filename }}</span></h4>
     <div class="d-flex gap-2">
-        <a href="/report/{{ log_type }}/{{ filename }}" class="btn btn-outline-primary btn-sm">Descargar reporte HTML</a>
+        <a href="/report/{{ log_type }}/{{ filename }}" class="btn btn-outline-primary btn-sm">⬇ Descargar reporte HTML</a>
         <a href="/" class="btn btn-outline-secondary btn-sm">← Subir otro archivo</a>
     </div>
 </div>
@@ -39,6 +39,7 @@
 </div>
 {% endif %}
 
+<!-- Top URLs (Apache Access) -->
 {% if results.extras.top_urls %}
 <div class="card shadow-sm mb-4">
     <div class="card-body">
@@ -63,7 +64,59 @@
 </div>
 {% endif %}
 
-<!-- Gráfica de tipos de evento -->
+<!-- Error levels (Apache Error) -->
+{% if results.extras.error_levels %}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h6 class="card-title">Errores por nivel</h6>
+                <table class="table table-sm table-striped mb-0">
+                    <thead>
+                        <tr>
+                            <th>Nivel</th>
+                            <th>Ocurrencias</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for level, count in results.extras.error_levels.items() %}
+                        <tr>
+                            <td><span class="badge bg-secondary">{{ level }}</span></td>
+                            <td>{{ count }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h6 class="card-title">Errores por módulo</h6>
+                <table class="table table-sm table-striped mb-0">
+                    <thead>
+                        <tr>
+                            <th>Módulo</th>
+                            <th>Ocurrencias</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for module, count in results.extras.modules.items() %}
+                        <tr>
+                            <td><code>{{ module }}</code></td>
+                            <td>{{ count }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Gráfica + IPs -->
 <div class="row mb-4">
     <div class="col-md-6">
         <div class="card shadow-sm">
@@ -73,8 +126,6 @@
             </div>
         </div>
     </div>
-
-    <!-- IPs identificadas -->
     <div class="col-md-6">
         <div class="card shadow-sm">
             <div class="card-body">
@@ -99,7 +150,6 @@
                     <tr>
                         <th>#</th>
                         <th>Tipo</th>
-                        <th>Usuario</th>
                         <th>IP</th>
                         <th>Línea original</th>
                     </tr>
@@ -109,9 +159,10 @@
                     <tr>
                         <td>{{ loop.index }}</td>
                         <td>
-                            <span class="badge bg-{{ event.severity }}{% if event.severity == 'warning' %} text-dark{% endif %}">{{ event.type }}</span>
+                            <span class="badge bg-{{ event.severity }}{% if event.severity == 'warning' %} text-dark{% endif %}">
+                                {{ event.type }}
+                            </span>
                         </td>
-                        <td>{{ event.user }}</td>
                         <td>{{ event.ip }}</td>
                         <td><code class="small">{{ event.line }}</code></td>
                     </tr>
@@ -131,13 +182,25 @@
         counts[e.type] = (counts[e.type] || 0) + 1;
     });
 
+    const colorMap = {
+        "danger": "#dc3545",
+        "warning": "#ffc107",
+        "success": "#198754",
+        "secondary": "#6c757d",
+    };
+
+    const labels = Object.keys(counts);
+    const severityMap = {};
+    events.forEach(e => { severityMap[e.type] = e.severity; });
+    const backgroundColors = labels.map(l => colorMap[severityMap[l]] || "#adb5bd");
+
     new Chart(document.getElementById("eventsChart"), {
         type: "doughnut",
         data: {
-            labels: Object.keys(counts),
+            labels: labels,
             datasets: [{
                 data: Object.values(counts),
-                backgroundColor: ["#dc3545", "#198754", "#ffc107"],
+                backgroundColor: backgroundColors,
             }]
         },
         options: {
