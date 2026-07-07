@@ -77,12 +77,13 @@ Open your browser at `http://127.0.0.1:5000`
 
 ## Supported Log Format
 
-This version is optimized for **OpenSSH authentication logs** following the standard Linux syslog format:
-```
-Jan 10 08:15:01 server sshd[1234]: Failed password for root from 192.168.1.105 port 22 ssh2
-Jan 10 08:20:11 server sshd[1235]: Accepted password for javier from 10.0.0.15 port 22 ssh2
-Jan 10 08:21:00 server sshd[1236]: Invalid user admin from 203.0.113.42 port 54321
-```
+## Supported Log Formats
+
+| Type | Format | Events Detected |
+|------|--------|-----------------|
+| OpenSSH | Linux syslog / auth.log | Failed login, Successful login, Invalid user, Brute force |
+| Apache Access | Combined Log Format | 4xx/5xx errors, Path traversal, SQL injection, Scanner |
+| Apache Error | Apache error.log | Error levels, Module errors, Client errors |
 
 Sample logs for testing: [logpai/loghub — OpenSSH](https://github.com/logpai/loghub)
 
@@ -114,7 +115,8 @@ security-dashboard/
 | Version | Scope                        | Status      |
 |---------|------------------------------|-------------|
 | v1.0.0  | OpenSSH log analysis         |  Complete |
-| v1.1.0  | Apache access log analysis   |  Planned  |
+| v1.1.0  | Apache access log analysis   |  Complete  |
+| v1.2.0  | Additional log types         |  Planned  |
 
 ---
 
