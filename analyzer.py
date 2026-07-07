@@ -8,6 +8,8 @@ FAILED_SSH = re.compile(r"Failed password for (?:invalid user )?(\w+) from (\S+)
 SUCCESSFUL_SSH = re.compile(r"Accepted (?:password|publickey) for (\w+) from (\S+)")
 INVALID_USER = re.compile(r"Invalid user (\w+) from (\S+)")
 IP_PATTERN = re.compile(r"\b(\d{1,3}(?:\.\d{1,3}){3})\b")
+PATH_TRAVERSAL = re.compile(r"\.\./|\.\.%2f|\.\.%5c", re.IGNORECASE)
+SQL_INJECTION = re.compile(r"(union|select|drop|insert|update|delete|'--|;--)", re.IGNORECASE)
 
 BRUTE_FORCE_THRESHOLD = 5
 
@@ -164,7 +166,13 @@ def _analyze_apache_access(filepath):
         top_urls[url] += 1
         methods[method] += 1
 
-        if status.startswith("5"):
+        if PATH_TRAVERSAL.search(url):
+            event_type = "Path Traversal"
+            severity = "danger"
+        elif SQL_INJECTION.search(url):
+            event_type = "SQL Injection Attempt"
+            severity = "danger"
+        elif status.startswith("5"):
             event_type = "5xx Error"
             severity = "danger"
         elif status.startswith("4"):
@@ -182,7 +190,7 @@ def _analyze_apache_access(filepath):
             "line": line.strip(),
         })
 
-    findings = _generate_apache_access_findings(failed_attempts, status_codes)
+    findings = _generate_apache_access_findings(failed_attempts, status_codes, events)
     sorted_ips = sorted(ips)
     top_urls_sorted = sorted(top_urls.items(), key=lambda x: x[1], reverse=True)[:10]
 
@@ -210,7 +218,7 @@ def _analyze_apache_access(filepath):
     }
 
 
-def _generate_apache_access_findings(failed_attempts, status_codes):
+def _generate_apache_access_findings(failed_attempts, status_codes, events):
     findings = []
 
     SCANNER_THRESHOLD = 100
@@ -227,6 +235,20 @@ def _generate_apache_access_findings(failed_attempts, status_codes):
         findings.append({
             "severity": "medium",
             "message": f"Alto número de errores 5xx detectados — {total_5xx} ocurrencias.",
+        })
+
+    transversal_ips = set(e["ip"] for e in events if e["type"] == "Path Traversal")
+    for ip in transversal_ips:
+        findings.append({
+            "severity": "high",
+            "message": f"Intento de Path Traversal detectado desde {ip}.",
+        })
+
+    sqli_ips = set(e["ip"] for e in events if e["type"] == "SQL Injection Attempt")
+    for ip in sqli_ips:
+        findings.append({
+            "severity": "high",
+            "message": f"Intento de SQL Injection detectado desde {ip}.",
         })
 
     return findings
