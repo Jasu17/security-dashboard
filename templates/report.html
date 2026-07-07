@@ -1,61 +1,201 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <title>Reporte de Seguridad - {{ filename }}</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 40px; color: #333; }
-        h1 { color: #1a1a2e; }
-        h2 { color: #16213e; border-bottom: 1px solid #ccc; padding-bottom: 6px; margin-top: 30px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border: 1px solid #ccc; padding: 8px 12px; text-align: left; font-size: 13px; }
-        th { background-color: #f0f0f0; }
-        tr:nth-child(even) { background-color: #f9f9f9; }
-        .badge { padding: 3px 8px; border-radius: 4px; font-size: 12px; color: white; }
-        .danger { background-color: #dc3545; color: white; }
-        .success { background-color: #198754; color: white; }
-        .warning { background-color: #ffc107; color: #333; }
-        .finding { padding: 10px 14px; border-radius: 4px; margin-bottom: 8px; }
-        .high { background-color: #f8d7da; border-left: 4px solid #dc3545; }
-        .medium { background-color: #fff3cd; border-left: 4px solid #ffc107; }
-        .info-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 16px 0; }
-        .metric { background: #f0f4ff; border-radius: 6px; padding: 14px; text-align: center; }
-        .metric h3 { margin: 0; font-size: 28px; }
-        .metric p { margin: 4px 0 0; font-size: 13px; color: #555; }
-        footer { margin-top: 40px; font-size: 12px; color: #999; text-align: center; }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            color: #333;
+        }
+
+        h1 {
+            color: #1a1a2e;
+        }
+
+        h2 {
+            color: #16213e;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 6px;
+            margin-top: 30px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ccc;
+            padding: 8px 12px;
+            text-align: left;
+            font-size: 13px;
+        }
+
+        th {
+            background-color: #f0f0f0;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .badge {
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: white;
+        }
+
+        .danger {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .success {
+            background-color: #198754;
+            color: white;
+        }
+
+        .warning {
+            background-color: #ffc107;
+            color: #333;
+        }
+
+        .finding {
+            padding: 10px 14px;
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+
+        .high {
+            background-color: #f8d7da;
+            border-left: 4px solid #dc3545;
+        }
+
+        .medium {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin: 16px 0;
+        }
+
+        .metric {
+            background: #f0f4ff;
+            border-radius: 6px;
+            padding: 14px;
+            text-align: center;
+        }
+
+        .metric h3 {
+            margin: 0;
+            font-size: 28px;
+        }
+
+        .metric p {
+            margin: 4px 0 0;
+            font-size: 13px;
+            color: #555;
+        }
+
+        footer {
+            margin-top: 40px;
+            font-size: 12px;
+            color: #999;
+            text-align: center;
+        }
     </style>
 </head>
 
 <body>
     <h1>Reporte de Seguridad</h1>
     <p><strong>Archivo analizado:</strong> {{ filename }}</p>
+    <p><strong>Tipo de archivo:</strong> {{ log_type }}</p>
     <h2>Resumen de Resultados</h2>
+
     <div class="info-grid">>
+        {% for metric in results.metrics %}
         <div class="metric">
-            <h3>{{ results.total_lines }}</h3>
-            <p>Líneas procesadas</p>
+            <h3>{{ metric.value }}</h3>
+            <p>{{ metric.label }}</p>
         </div>
-        <div class="metric">
-            <h3>{{ results.total_events }}</h3>
-            <p>Eventos detectados</p>
-        </div>
-        <div class="metric">
-            <h3>{{ results.ips | length }}</h3>
-            <p>IPs identificadas</p>
-        </div>
-        <div class="metric">
-            <h3>{{ results.users | length }}</h3>
-            <p>Usuarios identificados</p>
-        </div>
+        {% endfor %}
     </div>
 
     <h2>Hallazgos de seguridad</h2>
     {% if results.findings %}
-        {% for finding in results.findings %}
-            <div class="finding {{ finding.severity }}">{{ finding.message }}</div>
-        {% endfor %}
+    {% for finding in results.findings %}
+    <div class="finding {{ finding.severity }}">{{ finding.message }}</div>
+    {% endfor %}
     {% else %}
-        <p>No se encontraron hallazgos de seguridad.</p>
+    <p>No se encontraron hallazgos de seguridad.</p>
+    {% endif %}
+
+    {% if results.extras.top_urls %}
+    <h2>Top URLs solicitadas</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>URL</th>
+                <th>Requests</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for url, count in results.extras.top_urls %}
+            <tr>
+                <td><code>{{ url }}</code></td>
+                <td>{{ count }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+
+    {% if results.extras.error_levels %}
+    <h2>Errores por nivel</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Nivel</th>
+                <th>Ocurrencias</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for level, count in results.extras.error_levels.items() %}
+            <tr>
+                <td><span class="badge secondary">{{ level }}</span></td>
+                <td>{{ count }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>Errores por módulo</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Módulo</th>
+                <th>Ocurrencias</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for module, count in results.extras.modules.items() %}
+            <tr>
+                <td><code>{{ module }}</code></td>
+                <td>{{ count }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
     {% endif %}
 
     <h2>Eventos detectados</h2>
@@ -71,20 +211,21 @@
         </thead>
         <tbody>
             {% for event in results.events %}
-                <tr>
-                    <td>{{ loop.index }}</td>
-                    <td>
-                        <span class="badge {{ event.severity }}">{{ event.type }}</span>
-                    </td>
-                    <td>{{ event.user }}</td>
-                    <td>{{ event.ip }}</td>
-                    <td><code>{{ event.line }}</code></td>
-                </tr>
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>
+                    <span class="badge {{ event.severity }}">{{ event.type }}</span>
+                </td>
+                <td>{{ event.user }}</td>
+                <td>{{ event.ip }}</td>
+                <td><code>{{ event.line }}</code></td>
+            </tr>
             {% endfor %}
         </tbody>
     </table>
 
-    <footer>Generado por Security Dashboard MVP</footer>
+    <footer>Generado por Security Dashboard V1.1.0</footer>
 
 </body>
+
 </html>
